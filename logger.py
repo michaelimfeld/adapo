@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 
 class Logger(object):
     """
@@ -15,21 +16,25 @@ class Logger(object):
             print info message
         """
         print "info: %s" % message
+        sys.stdout.flush()
 
     def warn(self, message):
         """
             print warn message
         """
         print "%swarn: %s" % (self.WARN, message + self.ENDC)
+        sys.stdout.flush()
 
     def error(self, message):
         """
             print error message
         """
         print "%serror: %s" % (self.ERROR, message + self.ENDC)
+        sys.stdout.flush()
 
     def success(self, message):
         """
             print success message
         """
         print "%ssuccess: %s" % (self.SUCCESS, message + self.ENDC)
+        sys.stdout.flush()
