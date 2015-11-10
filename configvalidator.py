@@ -3,19 +3,30 @@ import yaml
 import urllib2
 import re
 from logger import Logger
+from serverconfig import ServerConfig
 
 class ConfigValidator(object):
 
     def __init__(self, cfg_file="csgo.conf"):
-        # load config file
-        config_file = open(cfg_file, "r")
-        self._config_yaml = yaml.load(config_file)
-        config_file.close()
+        self._logger= Logger()
+        self._config = ServerConfig()
 
-        self._log = Logger()
+        self._fastdl_url = self._config.get("csgo.fastdl_server")
+        self._maps = self._config.get("csgo.maps")
 
-        self._fastdl_url = self._config_yaml["csgo"]["fast_dl_server"]
-        self._maps = self._config_yaml["csgo"]["maps"]
+        self._logger.info("csgo config file validation initialized")
+
+    def validate(self):
+        """
+            validate csgo config
+        """
+        self._logger.info("validating maps ...")
+        maps = self.validate_maps()
+        # implement plugin validation
+        plugins = True
+
+        if not (maps or plugins):
+            return False
 
 
     def validate_maps(self):
@@ -31,7 +42,7 @@ class ConfigValidator(object):
         try:
             response = urllib2.urlopen(maps_url).read()
         except urllib2.URLError:
-            self._log.error("fastdl server '%s' unreachable" % self._fastdl_url)
+            self._logger.error("fastdl server '%s' unreachable" % self._fastdl_url)
             return False
 
         # get all present maps from fastdl_url
@@ -43,12 +54,13 @@ class ConfigValidator(object):
 
         for map in self._maps:
             if map not in maps_present:
-                self._log.error("map '%s' not available on fastdl server" % map)
+                self._logger.error("map '%s' not available on fastdl server" % map)
+                return False
                 continue
-            self._log.success("map '%s' found on fastdl server" % map)
+            self._logger.info("map '%s' found on fastdl server" % map)
 
 def main():
-    ConfigValidator().validate_maps()
+    ConfigValidator().validate()
 
 if __name__ == "__main__":
     main()
