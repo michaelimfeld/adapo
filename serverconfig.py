@@ -13,7 +13,6 @@ class ServerConfig(object):
     def __init__(self):
         self._config = None
         self._logger = Logger()
-
         self.load_config()
 
     def load_config(self):
@@ -29,8 +28,12 @@ class ServerConfig(object):
         """
             get config value by key
             examples:
-            csgo.maps   --> ['de_dust2', 'de_mirage']
-            server_name --> 'My Counter-Strike Server'
+            |---------------|-----------------------------|
+            | input key     | output value                |
+            |---------------|-----------------------------|
+            | csgo.maps     | ['de_dust2', 'de_mirage']   |
+            | server_name   | 'My Counter-Strike Server'  |
+            |---------------|-----------------------------|
         """
         #FIXME: try, except KeyError
 
