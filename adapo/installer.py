@@ -28,7 +28,7 @@ class Installer(object):
             install csgo server
         """
         if not self.install_steamcmd():
-            self._logger.error("steamcmd installation failed!")
+            self._logger.error("steamcmd installation failed, check '%s' for errors!" % self.LOG_FILE)
             return False
         self._logger.info("steamcmd successfully installed")
 
@@ -273,6 +273,16 @@ class Installer(object):
         if not self.unpack_metamod():
             self._logger.error("could not unpack metamod!")
             return False
+
+        metamod_vdf = os.path.join(self._root_dir, "csgo/addons/metamod.vdf")
+        with open(metamod_vdf, "w") as _file:
+            _file.write(
+                """
+                {
+                    "file"  "../csgo/addons/metamod/bin/server"
+                }
+                """
+            )
 
         return True
 
