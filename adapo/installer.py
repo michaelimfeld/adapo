@@ -14,7 +14,6 @@ class Installer(object):
     STEAMCMD_URL = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
     LOG_FILE = "/tmp/adapo_installer.log"
     STEAMCMD_TAR = "steamcmd_linux.tar.gz"
-    DATA_DIR = "/usr/share/adapo/data"
 
     def __init__(self):
         self._logger = Logger()
@@ -186,11 +185,32 @@ class Installer(object):
         #example:
         #./srcds_run -game csgo -console -usercon +game_type 0 +game_mode 0 +map am_must2 -tickrate 128 -maxplayers_override 32 -condebug
 
-    def install_plugins(self):
+    def install_plugins(self, args=None):
         """
             install sourcemod plugins
         """
         self._logger.info("installing plugins ...")
+
+        plugins = self._config.get("sourcemod.plugins")
+
+        for plugin in plugins:
+            self._logger.info("installing plugin '%s' ..." % plugin)
+            plugin_path = os.path.join(os.path.os.getcwd(), "plugins", plugin)
+
+            if os.path.exists(plugin_path + ".smx"):
+                plugin_path = plugin_path + ".smx"
+
+            if not os.path.exists(plugin_path):
+                self._logger.error("could not find plugin files for '%s'" % plugin_path)
+                continue
+
+            src = plugin_path
+            dst = self._config.get("csgo.root_directory")
+
+            if plugin_path.endswith(".smx"):
+                dst = os.path.join(self._config.get("csgo.root_directory"), "csgo/addons/sourcemod/plugins/")
+
+            shutil.copy2(src, dst)
 
         self._logger.info("simple plugins successfully installed")
         return True
