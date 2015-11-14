@@ -1,33 +1,46 @@
 import os
+import shutil
 from subprocess import Popen, PIPE, STDOUT
 from logger import Logger
 from configvalidator import ConfigValidator
 from serverconfig import ServerConfig
 
 
-class CSGOServer(object):
+class Installer(object):
     """
         CS:GO Server Installer
     """
 
     STEAMCMD_URL = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
-    LOG_FILE = "install.log"
+    LOG_FILE = "/tmp/adapo_installer.log"
+    STEAMCMD_TAR = "steamcmd_linux.tar.gz"
+    DATA_DIR = "/usr/share/adapo/data"
 
     def __init__(self):
         self._logger = Logger()
         self._steamcmd_path = os.path.join(os.path.os.getcwd(), "steamcmd")
         self._config = ServerConfig()
 
-    def install(self):
+    def install(self, args):
         """
             install csgo server
         """
         if not self.install_steamcmd():
             self._logger.error("steamcmd installation failed!")
             return False
+        self._logger.info("steamcmd successfully installed")
+
         if not self.install_csgo():
             self._logger.error("csgo installation failed, check '%s' for errors!" % self.LOG_FILE)
             return False
+        self._logger.info("csgo successfully installed")
+
+        if not self.install_plugins():
+            self._logger.error("plugin installation failed, check '%s' for errors!" % self.LOG_FILE)
+            return False
+        self._logger.info("plugins successfully installed")
+
+        return True
 
     def uninstall(self):
         """
@@ -70,12 +83,13 @@ class CSGOServer(object):
             steamcmd:
                 ./steamcmd.sh +login anonymous +force_install_dir /home/steam/server/csgo/ +app_update 740 +quit
         """
+        self._logger.info("installing csgo with steamcmd ...")
         root_dir = self._config.get("csgo.root_directory")
 
         if not os.path.exists(root_dir):
             os.makedirs(root_dir)
 
-        ret = self.open_subprocess(
+        return self.open_subprocess(
             [
                 "./steamcmd.sh",
                 "+login",
@@ -89,15 +103,11 @@ class CSGOServer(object):
             self._steamcmd_path
         )
 
-        if ret:
-            self._logger.info("csgo server successfully installed")
-
-        return ret
-
     def download_steamcmd(self):
         """
             downloads steamcmd.tar.gz
         """
+        self._logger.info("downloading steamcmd ...")
         return self.open_subprocess(
             [
                 "wget",
@@ -110,13 +120,14 @@ class CSGOServer(object):
         """
             unpack steamcmd.tar.gz
         """
-        path = os.path.join(self._steamcmd_path, "steamcmd_linux.tar.gz")
+        self._logger.info("unpacking steamcmd ...")
+        path = os.path.join(self._steamcmd_path, self.STEAMCMD_TAR)
 
         return self.open_subprocess(
             [
                 "tar",
                 "-xvzf",
-                path
+                self.STEAMCMD_TAR
             ],
             self._steamcmd_path
         )
@@ -125,7 +136,8 @@ class CSGOServer(object):
         """
             clean steamcmd directory
         """
-        path = os.path.join(self._steamcmd_path, "steamcmd_linux.tar.gz")
+        self._logger.info("cleaning up steamcmd directory ...")
+        path = os.path.join(self._steamcmd_path, self.STEAMCMD_TAR)
 
         if os.path.exists(path):
             os.remove(path)
@@ -136,6 +148,7 @@ class CSGOServer(object):
         """
             installs steamcmd
         """
+        self._logger.info("installing steamcmd ...")
         if not os.path.exists(self._steamcmd_path):
             os.makedirs(self._steamcmd_path)
 
@@ -151,24 +164,44 @@ class CSGOServer(object):
         if not self.download_steamcmd():
             self._logger.error("could not download steamcmd!")
             return False
+        self._logger.info("steamcmd successfully downloaded")
 
         if not self.unpack_steamcmd():
             self._logger.error("could not unpack steamcmd!")
             return False
+        self._logger.info("steamcmd successfully unpacked")
 
         if not self.clean_steamcmd():
             self._logger.error("could not clean steamcmd!")
             return False
+        self._logger.info("steamcmd successfully cleaned")
 
-        self._logger.info("steamcmd successfully installed")
         return True
+
+    def create_start_script(self):
+        """
+            create start.sh script in csgo root dir
+        """
+        #FIXME: implement start script creation
+        #example:
+        #./srcds_run -game csgo -console -usercon +game_type 0 +game_mode 0 +map am_must2 -tickrate 128 -maxplayers_override 32 -condebug
+
+    def install_plugins(self):
+        """
+            install sourcemod plugins
+        """
+        self._logger.info("installing plugins ...")
+
+        self._logger.info("simple plugins successfully installed")
+        return True
+
 
 
 def main():
     """
         main
     """
-    CSGOServer().install()
+    Installer().install()
 
 if __name__ == "__main__":
     main()
