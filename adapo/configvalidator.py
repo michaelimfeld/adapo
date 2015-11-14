@@ -8,7 +8,7 @@ from serverconfig import ServerConfig
 
 class ConfigValidator(object):
 
-    PLUGINS_DIR = "data/plugins"
+    PLUGINS_DIR = os.path.join(os.path.os.getcwd(), "data/plugins")
 
     def __init__(self, cfg_file="csgo.conf"):
         self._logger= Logger()
@@ -21,7 +21,7 @@ class ConfigValidator(object):
 
         self._logger.info("csgo config file validation initialized")
 
-    def validate(self):
+    def validate(self, args):
         """
             validate csgo config
         """
