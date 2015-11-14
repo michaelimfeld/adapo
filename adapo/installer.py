@@ -12,6 +12,8 @@ class Installer(object):
     """
 
     STEAMCMD_URL = "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz"
+    METAMOD_URL = "http://mirror.pointysoftware.net/alliedmodders/mmsource-1.10.6-linux.tar.gz"
+    SOURCEMOD_URL = "http://www.sourcemod.net/smdrop/1.7/sourcemod-1.7.3-git5275-linux.tar.gz"
     LOG_FILE = "/tmp/adapo_installer.log"
     STEAMCMD_TAR = "steamcmd_linux.tar.gz"
 
@@ -19,6 +21,7 @@ class Installer(object):
         self._logger = Logger()
         self._steamcmd_path = os.path.join(os.path.os.getcwd(), "steamcmd")
         self._config = ServerConfig()
+        self._root_dir = self._config.get("csgo.root_directory")
 
     def install(self, args):
         """
@@ -33,6 +36,16 @@ class Installer(object):
             self._logger.error("csgo installation failed, check '%s' for errors!" % self.LOG_FILE)
             return False
         self._logger.info("csgo successfully installed")
+
+        if not self.install_metamod():
+            self._logger.error("metamod installation failed, check '%s' for errors!" % self.LOG_FILE)
+            return False
+        self._logger.info("metamod successfully installed")
+
+        if not self.install_sourcemod():
+            self._logger.error("sourcemod installation failed, check '%s' for errors!" % self.LOG_FILE)
+            return False
+        self._logger.info("sourcmod successfully installed")
 
         if not self.install_plugins():
             self._logger.error("plugin installation failed, check '%s' for errors!" % self.LOG_FILE)
@@ -55,7 +68,7 @@ class Installer(object):
         """
         proc = Popen(
             args,
-            cwd=self._steamcmd_path,
+            cwd=cwd,
             stdout=PIPE,
             stderr=PIPE
         )
@@ -63,6 +76,10 @@ class Installer(object):
         #FIXME: use logger class
         log_file = open(self.LOG_FILE, "a")
         for line in iter(proc.stdout.readline, ""):
+            log_file.write(line)
+            log_file.flush()
+
+        for line in iter(proc.stderr.readline, ""):
             log_file.write(line)
             log_file.flush()
 
@@ -102,17 +119,40 @@ class Installer(object):
             self._steamcmd_path
         )
 
-    def download_steamcmd(self):
+    def download(self, url, dst):
         """
-            downloads steamcmd.tar.gz
+            download file from url to given
+            destination directory
         """
-        self._logger.info("downloading steamcmd ...")
+        self._logger.info("downloading '%s' ..." % url)
         return self.open_subprocess(
             [
                 "wget",
-                self.STEAMCMD_URL
+                url
             ],
-            self._steamcmd_path
+            dst
+        )
+
+    def download_steamcmd(self):
+        """
+            download steamcmd.tar.gz
+        """
+        self._logger.info("downloading steamcmd ...")
+        return self.download(self.STEAMCMD_URL, self._steamcmd_path)
+
+    def unpack(self, path, cwd):
+        """
+            unpack tar.gz file
+        """
+        self._logger.info("unpacking '%s' ..." % path)
+
+        return self.open_subprocess(
+            [
+                "tar",
+                "-xvzf",
+                path
+            ],
+            cwd
         )
 
     def unpack_steamcmd(self):
@@ -120,16 +160,7 @@ class Installer(object):
             unpack steamcmd.tar.gz
         """
         self._logger.info("unpacking steamcmd ...")
-        path = os.path.join(self._steamcmd_path, self.STEAMCMD_TAR)
-
-        return self.open_subprocess(
-            [
-                "tar",
-                "-xvzf",
-                self.STEAMCMD_TAR
-            ],
-            self._steamcmd_path
-        )
+        return self.unpack(self.STEAMCMD_TAR, self._steamcmd_path)
 
     def clean_steamcmd(self):
         """
@@ -177,6 +208,74 @@ class Installer(object):
 
         return True
 
+    def download_sourcemod(self):
+        """
+            download sourcemod
+        """
+        self._logger.info("downloading sourcemod ...")
+        return self.download(self.SOURCEMOD_URL, os.path.join(self._root_dir, "csgo"))
+
+    def unpack_sourcemod(self):
+        """
+            unpack sourcemod
+        """
+        self._logger.info("unpacking sourcemod ...")
+        sourcemod_tar = self.SOURCEMOD_URL.split("/")[-1]
+        dst = os.path.join(self._root_dir, "csgo")
+        ret = self.unpack(sourcemod_tar, dst)
+        os.remove(os.path.join(dst, sourcemod_tar))
+
+        return ret
+
+    def install_sourcemod(self, args=None):
+        """
+            install sourcemod to csgo root dir
+        """
+        self._logger.info("installing sourcemod ...")
+        if not self.download_sourcemod():
+            self._logger.error("could not download sourcemod!")
+            return False
+
+        if not self.unpack_sourcemod():
+            self._logger.error("could not unpack sourcemod!")
+            return False
+
+        return True
+
+    def download_metamod(self):
+        """
+            download metamod
+        """
+        self._logger.info("downloading metamod ...")
+        return self.download(self.METAMOD_URL, os.path.join(self._root_dir, "csgo"))
+
+    def unpack_metamod(self):
+        """
+            unpack metamod
+        """
+        self._logger.info("unpacking metamod ...")
+        metamod_tar = self.METAMOD_URL.split("/")[-1]
+        dst = os.path.join(self._root_dir, "csgo")
+        ret = self.unpack(metamod_tar, dst)
+        os.remove(os.path.join(dst, metamod_tar))
+
+        return ret
+
+    def install_metamod(self, args=None):
+        """
+            install metamod to csgo root dir
+        """
+        self._logger.info("installing metamod ...")
+        if not self.download_metamod():
+            self._logger.error("could not download metamod!")
+            return False
+
+        if not self.unpack_metamod():
+            self._logger.error("could not unpack metamod!")
+            return False
+
+        return True
+
     def create_start_script(self):
         """
             create start.sh script in csgo root dir
@@ -184,6 +283,28 @@ class Installer(object):
         #FIXME: implement start script creation
         #example:
         #./srcds_run -game csgo -console -usercon +game_type 0 +game_mode 0 +map am_must2 -tickrate 128 -maxplayers_override 32 -condebug
+
+    def copy_tree(self, src, dst):
+        """
+            copy all files in src directory
+            to dst --> cp -r src/* dst/
+        """
+        if not src.endswith("/"):
+            src += "/"
+
+        src += "*"
+        cmd = "cp -r %s %s" % (src, dst)
+
+        proc = Popen(
+            cmd,
+            shell="true"
+        )
+        ret = proc.wait()
+
+        if ret != 0:
+            return False
+
+        return True
 
     def install_plugins(self, args=None):
         """
@@ -209,19 +330,10 @@ class Installer(object):
 
             if plugin_path.endswith(".smx"):
                 dst = os.path.join(self._config.get("csgo.root_directory"), "csgo/addons/sourcemod/plugins/")
+                shutil.copy2(src, dst)
+                continue
 
-            shutil.copy2(src, dst)
+            self.copy_tree(src, dst)
 
         self._logger.info("simple plugins successfully installed")
         return True
-
-
-
-def main():
-    """
-        main
-    """
-    Installer().install()
-
-if __name__ == "__main__":
-    main()
