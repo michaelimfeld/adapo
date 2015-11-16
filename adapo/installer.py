@@ -15,7 +15,6 @@ class Installer(object):
     METAMOD_URL = "http://mirror.pointysoftware.net/alliedmodders/mmsource-1.10.6-linux.tar.gz"
     SOURCEMOD_URL = "http://www.sourcemod.net/smdrop/1.7/sourcemod-1.7.3-git5275-linux.tar.gz"
     LOG_FILE = "/tmp/adapo_installer.log"
-    STEAMCMD_TAR = "steamcmd_linux.tar.gz"
 
     def __init__(self):
         self._logger = Logger()
@@ -160,14 +159,18 @@ class Installer(object):
             unpack steamcmd.tar.gz
         """
         self._logger.info("unpacking steamcmd ...")
-        return self.unpack(self.STEAMCMD_TAR, self._steamcmd_path)
+
+        steamcmd_tar = self.STEAMCMD_URL.split("/")[-1]
+        return self.unpack(steamcmd_tar, self._steamcmd_path)
 
     def clean_steamcmd(self):
         """
             clean steamcmd directory
         """
         self._logger.info("cleaning up steamcmd directory ...")
-        path = os.path.join(self._steamcmd_path, self.STEAMCMD_TAR)
+
+        steamcmd_tar = self.STEAMCMD_URL.split("/")[-1]
+        path = os.path.join(self._steamcmd_path, steamcmd_tar)
 
         if os.path.exists(path):
             os.remove(path)
@@ -179,12 +182,14 @@ class Installer(object):
             installs steamcmd
         """
         self._logger.info("installing steamcmd ...")
+
+        steamcmd_tar = self.STEAMCMD_URL.split("/")[-1]
         if not os.path.exists(self._steamcmd_path):
             os.makedirs(self._steamcmd_path)
 
         steamcmd_tar = os.path.join(
             self._steamcmd_path,
-            "steamcmd_linux.tar.gz"
+            steamcmd_tar
         )
 
         if os.path.exists(steamcmd_tar):
