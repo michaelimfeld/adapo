@@ -15,7 +15,7 @@ class ConfigValidator(object):
         self._config = ServerConfig()
 
         self._root_dir = self._config.get("csgo.root_directory")
-        self._fastdl_url = self._config.get("csgo.fastdl_server")
+        self._fastdl_url = self._config.get("csgo.fastdl_url")
         self._maps = self._config.get("csgo.maps")
         self._plugins = self._config.get("sourcemod.plugins")
 
