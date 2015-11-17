@@ -19,6 +19,7 @@ def main():
     arg_install_sourcemod = subparsers.add_parser("installsourcemod", help="Install SourceMod")
     arg_install_metamod = subparsers.add_parser("installmetamod", help="Install MetaMod")
     arg_install_plugins = subparsers.add_parser("installplugins", help="Install SourceMod Plugins.")
+    arg_install_maps = subparsers.add_parser("installmaps", help="Install CS:GO Maps.")
 
     if os.path.exists("csgo.conf"):
         arg_validate.set_defaults(func=ConfigValidator().validate)
@@ -27,6 +28,7 @@ def main():
         arg_install_sourcemod.set_defaults(func=Installer().install_sourcemod)
         arg_install_metamod.set_defaults(func=Installer().install_metamod)
         arg_install_plugins.set_defaults(func=Installer().install_plugins)
+        arg_install_maps.set_defaults(func=Installer().install_maps)
 
     args = parser.parse_args()
     args.func(args)

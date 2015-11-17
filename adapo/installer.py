@@ -1,6 +1,6 @@
 import os
 import shutil
-from subprocess import Popen, PIPE, STDOUT
+import subprocess
 from logger import Logger
 from configvalidator import ConfigValidator
 from serverconfig import ServerConfig
@@ -51,6 +51,11 @@ class Installer(object):
             return False
         self._logger.info("plugins successfully installed")
 
+        if not self.install_maps():
+            self._logger.error("map installation failed, check '%s' for errors!" % self.LOG_FILE)
+            return False
+        self._logger.info("maps successfully installed")
+
         return True
 
     def uninstall(self):
@@ -65,26 +70,27 @@ class Installer(object):
             open sub process
             pipe stdout and stderr to log file
         """
-        proc = Popen(
-            args,
+        proc = subprocess.Popen(
+            ["stdbuf", "-oL"] + args,
             cwd=cwd,
-            stdout=PIPE,
-            stderr=PIPE
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=1,
+            close_fds=True
         )
 
         #FIXME: use logger class
         log_file = open(self.LOG_FILE, "a")
-        for line in iter(proc.stdout.readline, ""):
+        for line in iter(proc.stdout.readline, b""):
             log_file.write(line)
             log_file.flush()
 
-        for line in iter(proc.stderr.readline, ""):
+        for line in iter(proc.stderr.readline, b""):
             log_file.write(line)
             log_file.flush()
 
         log_file.close()
         proc.stdout.close()
-
         ret = proc.wait()
 
         if ret != 0:
@@ -124,13 +130,18 @@ class Installer(object):
             destination directory
         """
         self._logger.info("downloading '%s' ..." % url)
-        return self.open_subprocess(
+        os.chdir(dst)
+        ret = subprocess.call(
             [
                 "wget",
                 url
-            ],
-            dst
+            ]
         )
+
+        if ret != 0:
+            return False
+
+        return True
 
     def download_steamcmd(self):
         """
@@ -351,4 +362,91 @@ class Installer(object):
             self.copy_tree(src, dst)
 
         self._logger.info("simple plugins successfully installed")
+        return True
+
+    def dowload_map(self, map_name):
+        """
+            download map from fastdl server
+        """
+        url = self._config.get("csgo.fastdl_url") + "maps/" + map_name + ".bsp.bz2"
+        maps_dir = os.path.join(self._config.get("csgo.root_directory"), "csgo/maps")
+        return self.download(url, maps_dir)
+
+    def unpack_maps(self):
+        """
+            unpack all maps (*.bz2)
+            in csgo/maps
+        """
+        maps_dir = os.path.join(
+            self._config.get("csgo.root_directory"),
+            "csgo/maps"
+        )
+
+        for map_file in os.listdir(maps_dir):
+            if not map_file.endswith(".bsp.bz2"):
+                continue
+
+            self._logger.info("unpacking map '%s' ..." % map_file)
+
+            ret = self.open_subprocess(
+                [
+                    "bzip2",
+                    "-d",
+                    map_file
+                ],
+                maps_dir
+            )
+
+            if not ret:
+                return False
+
+        return True
+
+    def install_maps(self, args=None):
+        """
+            install maps if maps are not
+            already in maps dir
+        """
+        maps_dir = os.path.join(
+            self._config.get("csgo.root_directory"),
+            "csgo/maps"
+        )
+
+        maps_installed = os.listdir(maps_dir)
+
+        for map in self._config.get("csgo.maps"):
+            map_name = map + ".bsp"
+
+            if map_name in maps_installed:
+                self._logger.info("map '%s' already installed" % map_name)
+                continue
+
+            self._logger.info("installing map '%s' ..." % map_name)
+            ret = self.dowload_map(map)
+
+            if not ret:
+                return ret
+
+        if not self.unpack_maps():
+            return False
+
+        self._logger.info("writing maps to maplist.txt & mapcycle.txt ...")
+
+        maplist_file = os.path.join(
+            self._config.get("csgo.root_directory"),
+            "csgo/maplist.txt"
+        )
+
+        mapcycle_file = os.path.join(
+            self._config.get("csgo.root_directory"),
+            "csgo/mapcycle.txt"
+        )
+
+        with open(maplist_file, "w") as maplist:
+            for map in self._config.get("csgo.maps"):
+                maplist.write(map)
+                maplist.write("\n")
+
+        shutil.copy2(maplist_file, mapcycle_file)
+
         return True
