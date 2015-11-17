@@ -32,11 +32,11 @@ Example directory structure:
   - move config file(s) to /etc/
   - support multi server configs
 
+Structure:
 
     /etc/adapo/adapo.conf
     /etc/adapo/servers.d/cs-01.conf
     /etc/adapo/servers.d/cs-02.conf
-
     /var/adapo/data/
     /var/adapo/data/plugins/
 
