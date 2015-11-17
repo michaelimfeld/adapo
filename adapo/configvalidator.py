@@ -6,12 +6,16 @@ import urllib2
 from logger import Logger
 from serverconfig import ServerConfig
 
+
 class ConfigValidator(object):
+    """
+        Configuration Validator
+    """
 
     PLUGINS_DIR = os.path.join(os.path.os.getcwd(), "data/plugins")
 
     def __init__(self, cfg_file="csgo.conf"):
-        self._logger= Logger()
+        self._logger = Logger()
         self._config = ServerConfig()
 
         self._root_dir = self._config.get("csgo.root_directory")
@@ -40,7 +44,6 @@ class ConfigValidator(object):
         self._logger.info("validating plugins ...")
 
         for plugin in self._plugins:
-            #FIXME: paths?
             path = os.path.join(self.PLUGINS_DIR, plugin)
 
             if os.path.exists("%s.smx" % path):
@@ -70,7 +73,9 @@ class ConfigValidator(object):
         try:
             response = urllib2.urlopen(maps_url).read()
         except urllib2.URLError:
-            self._logger.error("fastdl server '%s' unreachable" % self._fastdl_url)
+            self._logger.error(
+                "fastdl server '%s' unreachable" % self._fastdl_url
+            )
             return False
 
         # get all present maps from fastdl_url
@@ -82,12 +87,8 @@ class ConfigValidator(object):
 
         for map in self._maps:
             if map not in maps_present:
-                self._logger.error("map '%s' not available on fastdl server" % map)
+                self._logger.error(
+                    "map '%s' not available on fastdl server" % map
+                )
                 return False
             self._logger.info("map '%s' found on fastdl server" % map)
-
-def main():
-    ConfigValidator().validate()
-
-if __name__ == "__main__":
-    main()
