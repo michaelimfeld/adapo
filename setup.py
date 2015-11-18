@@ -15,7 +15,10 @@ setup(
     platforms=["Linux", "Windows", "MAC OS X"],
     url="https://github.com/michaelimfeld/adapo",
     packages=["adapo"],
-    data_files = [('/usr/share/adapo/data/', ['data/csgo.conf'])],
+    data_files=[
+        ('/usr/share/adapo/data/', ['data/csgo.conf']),
+        ('/etc/adapo/', ['config/main.conf'])
+    ],
     entry_points={"console_scripts": ["adapo = adapo.core:main"]},
     classifiers=[
       "Development Status :: 4 - Beta",
@@ -41,5 +44,4 @@ setup(
       "Topic :: Software Development",
       "Topic :: Software Development :: Testing"
       ]
-    )
-
+)
