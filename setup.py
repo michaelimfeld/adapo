@@ -16,8 +16,8 @@ setup(
     url="https://github.com/michaelimfeld/adapo",
     packages=["adapo"],
     data_files=[
-        ('/usr/share/adapo/data/', ['data/csgo.conf']),
-        ('/etc/adapo/', ['config/main.conf'])
+        ('/etc/adapo/servers.d/', ['config/example.cfg']),
+        ('/etc/adapo/', ['config/main.cfg'])
     ],
     entry_points={"console_scripts": ["adapo = adapo.core:main"]},
     classifiers=[
