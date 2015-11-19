@@ -8,21 +8,20 @@ class ServerConfig(object):
         csgo server configuration
     """
 
-    CONFIG_FILE = "csgo.conf"
-
-    def __init__(self):
+    def __init__(self, path):
         self._config = None
         self._logger = Logger()
+        self._path = path
         self.load_config()
 
     def load_config(self):
         """
             load config file
         """
-        config_file = open(self.CONFIG_FILE, "r")
+        config_file = open(self._path, "r")
         self._config = yaml.load(config_file)
         config_file.close()
-        self._logger.info("config file '%s' loaded" % self.CONFIG_FILE)
+        self._logger.info("config file '%s' loaded" % self._path)
 
     def get(self, key):
         """
@@ -35,12 +34,17 @@ class ServerConfig(object):
             | server_name   | 'My Counter-Strike Server'  |
             |---------------|-----------------------------|
         """
-        #FIXME: try, except KeyError
+        try:
+            keys = key.split(".")
+            value = self._config[keys[0]]
 
-        keys = key.split(".")
-        value = self._config[keys[0]]
+            for key in keys[1:]:
+                value = value[key]
 
-        for key in keys[1:]:
-            value = value[key]
+            return value
 
-        return value
+        except KeyError:
+            self._logger.error(
+                "could not find key '%s' in '%s'" % (key, self_path)
+            )
+            return False

@@ -4,31 +4,47 @@ from argparse import ArgumentParser
 from initializer import Initializer
 from configvalidator import ConfigValidator
 from installer import Installer
+from logger import Logger
+
+
+class AdapoCore(object):
+
+    CONFIG_PATH = "/etc/adapo/servers.d/"
+
+    def __init__(self):
+        self._logger = Logger()
+        self._configs = []
+        self.get_configs()
+
+    def install(self, args=None):
+        """
+            trigger installer for every
+            loaded config file
+        """
+        for config in self._configs:
+            Installer(config).install()
+
+    def get_configs(self):
+        """
+            add all config files in
+            /etc/adapo/servers.d/
+            to list
+        """
+        self._logger.info("loading server configuration files ...")
+        for config in os.listdir(self.CONFIG_PATH):
+            if config.endswith(".cfg") and config != "example.cfg":
+                self._configs.append(os.path.join(self.CONFIG_PATH, config))
+
 
 def main():
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
 
-    arg_init = subparsers.add_parser("init", help="Create installer directory.")
-    arg_init.set_defaults(func=Initializer().init)
-
-    arg_validate = subparsers.add_parser("validate", help="Validate configuration file 'csgo.conf'.")
-    arg_install = subparsers.add_parser("install", help="Install CS:GO Server with configuration file 'csgo.conf'.")
-
-    #FIXME: make subcommand of arg_install
-    arg_install_sourcemod = subparsers.add_parser("installsourcemod", help="Install SourceMod")
-    arg_install_metamod = subparsers.add_parser("installmetamod", help="Install MetaMod")
-    arg_install_plugins = subparsers.add_parser("installplugins", help="Install SourceMod Plugins.")
-    arg_install_maps = subparsers.add_parser("installmaps", help="Install CS:GO Maps.")
-
-    if os.path.exists("csgo.conf"):
-        arg_validate.set_defaults(func=ConfigValidator().validate)
-        #FIXME: add config file path param
-        arg_install.set_defaults(func=Installer().install)
-        arg_install_sourcemod.set_defaults(func=Installer().install_sourcemod)
-        arg_install_metamod.set_defaults(func=Installer().install_metamod)
-        arg_install_plugins.set_defaults(func=Installer().install_plugins)
-        arg_install_maps.set_defaults(func=Installer().install_maps)
+    arg_install = subparsers.add_parser(
+        "install",
+        help="Install all servers configured in '/etc/adapo/servers.d/*.cfg'"
+    )
+    arg_install.set_defaults(func=AdapoCore().install)
 
     args = parser.parse_args()
     args.func(args)
