@@ -24,6 +24,17 @@ class AdapoCore(object):
         for config in self._configs:
             Installer(config).install()
 
+    def validate(self, args=None):
+        """
+            trigger validator for every
+            loaded config file
+        """
+        for config in self._configs:
+            if ConfigValidator(config).validate():
+                self._logger.info("config file '%s'is valid" % config)
+                continue
+            self._logger.error("config file '%s'is invalid!" % config)
+
     def get_configs(self):
         """
             add all config files in
@@ -44,7 +55,13 @@ def main():
         "install",
         help="Install all servers configured in '/etc/adapo/servers.d/*.cfg'"
     )
+    arg_validate = subparsers.add_parser(
+        "validate",
+        help="Validate all servers configured in '/etc/adapo/servers.d/*.cfg'"
+    )
+
     arg_install.set_defaults(func=AdapoCore().install)
+    arg_validate.set_defaults(func=AdapoCore().validate)
 
     args = parser.parse_args()
     args.func(args)

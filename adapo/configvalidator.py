@@ -12,20 +12,24 @@ class ConfigValidator(object):
         Configuration Validator
     """
 
-    PLUGINS_DIR = os.path.join(os.path.os.getcwd(), "data/plugins")
+    ADAPO_CONF = "/etc/adapo/main.cfg"
 
-    def __init__(self, cfg_file="csgo.conf"):
+    def __init__(self, config_path):
         self._logger = Logger()
-        self._config = ServerConfig()
 
+        # load global adapo configuration
+        self._adapo_config = ServerConfig(self.ADAPO_CONF)
+        self._data_path = self._adapo_config.get("data_src_path")
+
+        self._config = ServerConfig(config_path)
         self._root_dir = self._config.get("csgo.root_directory")
-        self._fastdl_url = self._config.get("csgo.fastdl_url")
+        self._fastdl_url = self._config.get("server_config.sv_downloadurl")
         self._maps = self._config.get("csgo.maps")
         self._plugins = self._config.get("sourcemod.plugins")
 
         self._logger.info("csgo config file validation initialized")
 
-    def validate(self, args):
+    def validate(self):
         """
             validate csgo config
         """
@@ -44,7 +48,7 @@ class ConfigValidator(object):
         self._logger.info("validating plugins ...")
 
         for plugin in self._plugins:
-            path = os.path.join(self.PLUGINS_DIR, plugin)
+            path = os.path.join(self._data_path, "plugins", plugin)
 
             if os.path.exists("%s.smx" % path):
                 self._logger.info("found simple plugin '%s.smx'" % path)
