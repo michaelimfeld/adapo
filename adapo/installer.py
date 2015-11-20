@@ -3,7 +3,6 @@ import stat
 import shutil
 import subprocess
 from logger import Logger
-from configvalidator import ConfigValidator
 from serverconfig import ServerConfig
 from parameters import Parameters
 
@@ -337,13 +336,10 @@ class Installer(object):
 
         metamod_vdf = os.path.join(self._root_dir, "csgo/addons/metamod.vdf")
         with open(metamod_vdf, "w") as _file:
-            _file.write(
-                """
-                {
-                    "file"  "../csgo/addons/metamod/bin/server"
-                }
-                """
-            )
+            _file.write('"Plugin"\n')
+            _file.write('{\n')
+            _file.write('\t"file"  "../csgo/addons/metamod/bin/server"\n')
+            _file.write('}\n')
 
         return True
 
@@ -358,7 +354,7 @@ class Installer(object):
         src += "*"
         cmd = "cp -r %s %s" % (src, dst)
 
-        proc = Popen(
+        proc = subprocess.Popen(
             cmd,
             shell="true"
         )
