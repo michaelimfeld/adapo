@@ -1,9 +1,11 @@
 import os
+import stat
 import shutil
 import subprocess
 from logger import Logger
 from configvalidator import ConfigValidator
 from serverconfig import ServerConfig
+from parameters import Parameters
 
 
 class Installer(object):
@@ -88,6 +90,13 @@ class Installer(object):
             )
             return False
         self._logger.info("server config successfully installed")
+
+        if not self.create_start_script():
+            self._logger.error(
+                "could not create start script!, "
+                "check '%s' for errors!" % self.LOG_FILE
+            )
+        self._logger.info("start script successfully written")
 
         return True
 
@@ -338,15 +347,6 @@ class Installer(object):
 
         return True
 
-    def create_start_script(self):
-        """
-            create start.sh script in csgo root dir
-        """
-        # FIXME: Implement start script creation
-        # Example:
-        # ./srcds_run -game csgo -console -usercon +game_type 0 +game_mode 0
-        # +map am_must2 -tickrate 128 -maxplayers_override 32 -condebug
-
     def copy_tree(self, src, dst):
         """
             copy all files in src directory
@@ -524,5 +524,57 @@ class Installer(object):
                 config_file.write(
                     '%s "%s"\n' % (key, value)
                 )
+
+        return True
+
+    def create_start_script(self):
+        """
+            create start.sh script in csgo root dir
+            example:
+            ./srcds_run -game csgo -console -usercon +game_type 0 +game_mode 0
+            +map am_must2 -tickrate 128 -maxplayers_override 32 -condebug
+        """
+        gametype = self._config.get("csgo.game_type")
+        gamemode = self._config.get("csgo.game_mode")
+        start_map = self._config.get("csgo.map")
+        tickrate = self._config.get("csgo.tickrate")
+        max_players = self._config.get("csgo.max_players")
+        port = self._config.get("csgo.port")
+
+        cmd = os.path.join(self._root_dir, "srcds_run")
+        args = [
+            "-game csgo",
+            "-console",
+            "-usercon"
+        ]
+
+        if gametype:
+            arg = "%s %s" % (Parameters.GAME_TYPE, gametype)
+            args.append(arg)
+        if gamemode:
+            arg = "%s %s" % (Parameters.GAME_MODE, gamemode)
+            args.append(arg)
+        if start_map:
+            arg = "%s %s" % (Parameters.MAP, start_map)
+            args.append(arg)
+        if tickrate:
+            arg = "%s %s" % (Parameters.TICKRATE, tickrate)
+            args.append(arg)
+        if max_players:
+            arg = "%s %s" % (Parameters.MAX_PLAYERS, max_players)
+            args.append(arg)
+        if port:
+            arg = "%s %s" % (Parameters.PORT, port)
+            args.append(arg)
+
+        start_script_path = os.path.join(self._root_dir, "start.sh")
+        arg_string = " ".join(args)
+
+        with open(start_script_path, "w") as start_script_file:
+            start_script_file.write("%s %s" % (cmd, arg_string))
+
+        # set execute permission
+        sta = os.stat(start_script_path)
+        os.chmod(start_script_path, sta.st_mode | stat.S_IEXEC)
 
         return True

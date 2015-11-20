@@ -1,6 +1,6 @@
 # csgo server assembler/installer
 
-This python application has the goal to setup/install a Counter-Strike: Global Offensive Servers inlcuding metamod, sourcemod and its plugins by only reading a text based configuration file.
+This python application has the goal to setup/install Counter-Strike: Global Offensive Servers inlcuding metamod, sourcemod and its plugins by only reading a text based configuration file.
 To install custom sourcemod plugins an additional data folder is required. (see sourcemod data)
 
 This software will be designed for deploying multiple CS:GO Servers with SaltStack.
