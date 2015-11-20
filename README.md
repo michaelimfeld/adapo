@@ -1,9 +1,15 @@
 # csgo server assembler/installer
 
-This python application has the goal to setup/install a Counter-Strike: Global Offensive Server inlcuding metamod, sourcemod and its plugins by only reading a text based configuration.
-To install sourcemod plugins an additional data folder is required, where all the smx files and special configurations are stored.
+This python application has the goal to setup/install a Counter-Strike: Global Offensive Servers inlcuding metamod, sourcemod and its plugins by only reading a text based configuration file.
+To install custom sourcemod plugins an additional data folder is required. (see sourcemod data)
 
 This software will be designed for deploying multiple CS:GO Servers with SaltStack.
+
+## usage
+
+The following command will assemble/install all cs:go servers configured in "/etc/adapo/servers.d/".
+
+    adapo install
 
 ## sourcemod data
 ### plugins
@@ -25,30 +31,4 @@ Example directory structure:
     data/plugins/complexplugin/csgo/addons/configs/complex.cfg
     data/plugins/complexplugin/csgo/cfg/sourcemod/complexplugin/plugin.cfg
 
-## Planned Stuff
-
-### New Data Structure:
-
-  - move config file(s) to /etc/
-  - support multi server configs
-
-Structure:
-
-    /etc/adapo/adapo.conf
-    /etc/adapo/servers.d/cs-01.conf
-    /etc/adapo/servers.d/cs-02.conf
-    /var/adapo/data/
-    /var/adapo/data/plugins/
-
-Main config file should contain:
-
-  - steamcmd path
-  - download urls for sourcemod & metamod
-
-### Update Cronjob
-
-Cronjob which keeps servers up to date with steamcmd.
-
-### Init.d Script
-
-Generate init.d script for each server configured in /etc/adapo/servers.d/.
+The data directory can be set in the global adapo configuration (/etc/adapo/main.cfg)
