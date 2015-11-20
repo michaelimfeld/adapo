@@ -511,25 +511,6 @@ class Installer(object):
         """
             write config server.cfg
         """
-        hostname = self._config.get("csgo.server_name")
-        tags = self._config.get("csgo.server_tags")
-        fastdl_url = self._config.get("csgo.fastdl_url")
-        passwd = self._config.get("csgo.server_password")
-        login_token = self._config.get("csgo.login_token")
-
-        # FIXME: looks ugly!
-        config_string = ""
-        if hostname:
-            config_string += "hostname" + hostname + "\n"
-        if tags:
-            config_string += "sv_tags" + tags + "\n"
-        if fastdl_url:
-            config_string += "sv_downloadurl" + fastdl_url + "\n"
-        if passwd:
-            config_string += "sv_password" + passwd + "\n"
-        if login_token:
-            config_string += "sv_setsteamaccount" + login_token + "\n"
-
         server_cfg_file = os.path.join(
             self._config.get("csgo.root_directory"),
             "csgo/cfg/server.cfg"
@@ -538,6 +519,10 @@ class Installer(object):
         self._logger.info("generating '%s' ..." % server_cfg_file)
 
         with open(server_cfg_file, "w") as config_file:
-            config_file.write(config_string)
+            server_vars = self._config.get("server_config")
+            for key, value in server_vars.iteritems():
+                config_file.write(
+                    '%s "%s"\n' % (key, value)
+                )
 
         return True

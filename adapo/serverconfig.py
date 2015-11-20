@@ -45,6 +45,6 @@ class ServerConfig(object):
 
         except KeyError:
             self._logger.error(
-                "could not find key '%s' in '%s'" % (key, self_path)
+                "could not find key '%s' in '%s'" % (key, self._path)
             )
             return False
