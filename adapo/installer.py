@@ -471,10 +471,10 @@ class Installer(object):
             "-usercon"
         ]
 
-        if gametype:
+        if gametype is not None:
             arg = "%s %s" % (Parameters.GAME_TYPE, gametype)
             args.append(arg)
-        if gamemode:
+        if gamemode is not None:
             arg = "%s %s" % (Parameters.GAME_MODE, gamemode)
             args.append(arg)
         if start_map:
