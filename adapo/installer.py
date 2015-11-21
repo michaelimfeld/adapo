@@ -1,10 +1,14 @@
+"""
+    Main Server Installer Module
+"""
+
 import os
 import stat
 import shutil
-import subprocess
-from logger import Logger
-from serverconfig import ServerConfig
-from parameters import Parameters
+from adapo.logger import Logger
+from adapo.serverconfig import ServerConfig
+from adapo.parameters import Parameters
+from adapo.resourcemanager import ResourceManager
 
 
 class Installer(object):
@@ -29,6 +33,8 @@ class Installer(object):
         # load specific cs:go server configuration
         self._config = ServerConfig(config_path)
         self._root_dir = self._config.get("csgo.root_directory")
+
+        self._resourcemanager = ResourceManager()
 
     def install(self):
         """
@@ -106,38 +112,6 @@ class Installer(object):
         # FIXME: Implement uninstall
         self._logger.info("uninstall not implemented yet")
 
-    def open_subprocess(self, args, cwd):
-        """
-            open sub process
-            pipe stdout and stderr to log file
-        """
-        proc = subprocess.Popen(
-            ["stdbuf", "-oL"] + args,
-            cwd=cwd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            bufsize=1,
-            close_fds=True
-        )
-
-        # FIXME: Use logger class
-        log_file = open(self.LOG_FILE, "a")
-        for line in iter(proc.stdout.readline, b""):
-            log_file.write(line)
-            log_file.flush()
-
-        for line in iter(proc.stderr.readline, b""):
-            log_file.write(line)
-            log_file.flush()
-
-        log_file.close()
-        proc.stdout.close()
-        ret = proc.wait()
-
-        if ret != 0:
-            return False
-        return True
-
     def install_csgo(self):
         """
             install csgo server
@@ -148,7 +122,7 @@ class Installer(object):
         if not os.path.exists(root_dir):
             os.makedirs(root_dir)
 
-        return self.open_subprocess(
+        return self._resourcemanager.open_subprocess(
             [
                 "./steamcmd.sh",
                 "+login",
@@ -162,45 +136,14 @@ class Installer(object):
             self._steamcmd_path
         )
 
-    def download(self, url, dst):
-        """
-            download file from url to given
-            destination directory
-        """
-        self._logger.info("downloading '%s' ..." % url)
-        os.chdir(dst)
-        ret = subprocess.call(
-            [
-                "wget",
-                url
-            ]
-        )
-
-        if ret != 0:
-            return False
-
-        return True
-
     def download_steamcmd(self):
         """
             download steamcmd.tar.gz
         """
         self._logger.info("downloading steamcmd ...")
-        return self.download(self._steamcmd_url, self._steamcmd_path)
-
-    def unpack(self, path, cwd):
-        """
-            unpack tar.gz file
-        """
-        self._logger.info("unpacking '%s' ..." % path)
-
-        return self.open_subprocess(
-            [
-                "tar",
-                "-xvzf",
-                path
-            ],
-            cwd
+        return self._resourcemanager.download(
+            self._steamcmd_url,
+            self._steamcmd_path
         )
 
     def unpack_steamcmd(self):
@@ -210,7 +153,7 @@ class Installer(object):
         self._logger.info("unpacking steamcmd ...")
 
         steamcmd_tar = self._steamcmd_url.split("/")[-1]
-        return self.unpack(steamcmd_tar, self._steamcmd_path)
+        return self._resourcemanager.unpack(steamcmd_tar, self._steamcmd_path)
 
     def clean_steamcmd(self):
         """
@@ -267,7 +210,7 @@ class Installer(object):
             download sourcemod
         """
         self._logger.info("downloading sourcemod ...")
-        return self.download(
+        return self._resourcemanager.download(
             self._sourcemod_url,
             os.path.join(self._root_dir, "csgo")
         )
@@ -279,7 +222,7 @@ class Installer(object):
         self._logger.info("unpacking sourcemod ...")
         sourcemod_tar = self._sourcemod_url.split("/")[-1]
         dst = os.path.join(self._root_dir, "csgo")
-        ret = self.unpack(sourcemod_tar, dst)
+        ret = self._resourcemanager.unpack(sourcemod_tar, dst)
         os.remove(os.path.join(dst, sourcemod_tar))
 
         return ret
@@ -304,7 +247,7 @@ class Installer(object):
             download metamod
         """
         self._logger.info("downloading metamod ...")
-        return self.download(
+        return self._resourcemanager.download(
             self._metamod_url,
             os.path.join(self._root_dir, "csgo")
         )
@@ -316,7 +259,7 @@ class Installer(object):
         self._logger.info("unpacking metamod ...")
         metamod_tar = self._metamod_url.split("/")[-1]
         dst = os.path.join(self._root_dir, "csgo")
-        ret = self.unpack(metamod_tar, dst)
+        ret = self._resourcemanager.unpack(metamod_tar, dst)
         os.remove(os.path.join(dst, metamod_tar))
 
         return ret
@@ -340,28 +283,6 @@ class Installer(object):
             _file.write('{\n')
             _file.write('\t"file"  "../csgo/addons/metamod/bin/server"\n')
             _file.write('}\n')
-
-        return True
-
-    def copy_tree(self, src, dst):
-        """
-            copy all files in src directory
-            to dst --> cp -r src/* dst/
-        """
-        if not src.endswith("/"):
-            src += "/"
-
-        src += "*"
-        cmd = "cp -r %s %s" % (src, dst)
-
-        proc = subprocess.Popen(
-            cmd,
-            shell="true"
-        )
-        ret = proc.wait()
-
-        if ret != 0:
-            return False
 
         return True
 
@@ -397,7 +318,7 @@ class Installer(object):
                 shutil.copy2(src, dst)
                 continue
 
-            self.copy_tree(src, dst)
+            self._resourcemanager.copy_tree(src, dst)
 
         self._logger.info("simple plugins successfully installed")
         return True
@@ -412,7 +333,7 @@ class Installer(object):
             self._config.get("csgo.root_directory"),
             "csgo/maps"
         )
-        return self.download(url, maps_dir)
+        return self._resourcemanager.download(url, maps_dir)
 
     def unpack_maps(self):
         """
@@ -430,7 +351,7 @@ class Installer(object):
 
             self._logger.info("unpacking map '%s' ..." % map_file)
 
-            ret = self.open_subprocess(
+            ret = self._resourcemanager.open_subprocess(
                 [
                     "bzip2",
                     "-d",
@@ -456,15 +377,15 @@ class Installer(object):
 
         maps_installed = os.listdir(maps_dir)
 
-        for map in self._config.get("csgo.maps"):
-            map_name = map + ".bsp"
+        for _map in self._config.get("csgo.maps"):
+            map_name = _map + ".bsp"
 
             if map_name in maps_installed:
                 self._logger.info("map '%s' already installed" % map_name)
                 continue
 
             self._logger.info("installing map '%s' ..." % map_name)
-            ret = self.dowload_map(map)
+            ret = self.dowload_map(_map)
 
             if not ret:
                 return ret
@@ -485,8 +406,8 @@ class Installer(object):
         )
 
         with open(maplist_file, "w") as maplist:
-            for map in self._config.get("csgo.maps"):
-                maplist.write(map)
+            for _map in self._config.get("csgo.maps"):
+                maplist.write(_map)
                 maplist.write("\n")
 
         shutil.copy2(maplist_file, mapcycle_file)

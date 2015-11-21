@@ -1,6 +1,9 @@
-#!/usr/bin/python
+"""
+    YAML Configuration File Reader
+"""
+
 import yaml
-from logger import Logger
+from adapo.logger import Logger
 
 
 class ServerConfig(object):
@@ -47,4 +50,3 @@ class ServerConfig(object):
             self._logger.error(
                 "could not find key '%s' in '%s'" % (key, self._path)
             )
-            return False

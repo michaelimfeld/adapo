@@ -1,13 +1,20 @@
 #!/usr/bin/python
+"""
+    Adapo Core Application
+"""
+
 import os
 from argparse import ArgumentParser
-from initializer import Initializer
-from configvalidator import ConfigValidator
-from installer import Installer
-from logger import Logger
+from adapo.configvalidator import ConfigValidator
+from adapo.installer import Installer
+from adapo.logger import Logger
 
 
 class AdapoCore(object):
+    """
+        Provides helper functions to trigger
+        installer functions per config file
+    """
 
     CONFIG_PATH = "/etc/adapo/servers.d/"
 
@@ -16,7 +23,7 @@ class AdapoCore(object):
         self._configs = []
         self.get_configs()
 
-    def install(self, args=None):
+    def install(self, _):
         """
             trigger installer for every
             loaded config file
@@ -24,7 +31,7 @@ class AdapoCore(object):
         for config in self._configs:
             Installer(config).install()
 
-    def validate(self, args=None):
+    def validate(self, _):
         """
             trigger validator for every
             loaded config file
@@ -48,6 +55,10 @@ class AdapoCore(object):
 
 
 def main():
+    """
+        Parse arguments
+    """
+
     parser = ArgumentParser()
     subparsers = parser.add_subparsers()
 

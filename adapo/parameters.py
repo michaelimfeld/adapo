@@ -1,3 +1,7 @@
+"""
+    Provides parameters class
+"""
+
 class Parameters(object):
     """
         srcds_run start parameters

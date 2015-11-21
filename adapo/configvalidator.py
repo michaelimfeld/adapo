@@ -1,10 +1,12 @@
-#!/usr/bin/python
+"""
+    Configuration Validator
+"""
+
 import re
 import os
-import yaml
 import urllib2
-from logger import Logger
-from serverconfig import ServerConfig
+from adapo.logger import Logger
+from adapo.serverconfig import ServerConfig
 
 
 class ConfigValidator(object):
@@ -89,10 +91,10 @@ class ConfigValidator(object):
                 map_name = map_url.split(".")[0]
                 maps_present.append(map_name)
 
-        for map in self._maps:
-            if map not in maps_present:
+        for _map in self._maps:
+            if _map not in maps_present:
                 self._logger.error(
-                    "map '%s' not available on fastdl server" % map
+                    "map '%s' not available on fastdl server" % _map
                 )
                 return False
-            self._logger.info("map '%s' found on fastdl server" % map)
+            self._logger.info("map '%s' found on fastdl server" % _map)

@@ -1,4 +1,7 @@
-#!/usr/bin/python
+"""
+    Adapo Logger
+"""
+
 import sys
 
 class Logger(object):
