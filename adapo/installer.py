@@ -240,6 +240,11 @@ class Installer(object):
             self._logger.error("could not unpack sourcemod!")
             return False
 
+        if not self.write_admins_config():
+            self._logger.error("could not write admins_simple.ini")
+            return False
+        self._logger.info("admins_simple.ini successfully written")
+
         return True
 
     def download_metamod(self):
@@ -493,5 +498,26 @@ class Installer(object):
         # set execute permission
         sta = os.stat(start_script_path)
         os.chmod(start_script_path, sta.st_mode | stat.S_IEXEC)
+
+        return True
+
+    def write_admins_config(self):
+        """
+            write config admins_simple.ini
+        """
+        admins_config_file = os.path.join(
+            self._config.get("csgo.root_directory"),
+            "csgo/addons/sourcemod/configs/admins_simple.ini"
+        )
+
+        self._logger.info("generating '%s' ..." % admins_config_file)
+
+        users = self._config.get("sourcemod.users")
+
+        with open(admins_config_file, "w") as config_file:
+            for user in users:
+                config_file.write(
+                    '"%s" "%s"\n' % (user["steam_id"], user["flags"])
+                )
 
         return True
