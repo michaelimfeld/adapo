@@ -12,4 +12,5 @@ class Parameters(object):
     GAME_TYPE = "+game_type"
     GAME_MODE = "+game_mode"
     MAX_PLAYERS = "-maxplayers_override"
+    IP_ADDR = "-ip"
     PORT = "-port"

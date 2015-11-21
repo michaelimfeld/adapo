@@ -461,6 +461,7 @@ class Installer(object):
         start_map = self._config.get("csgo.map")
         tickrate = self._config.get("csgo.tickrate")
         max_players = self._config.get("csgo.max_players")
+        ip_addr = self._config.get("csgo.ip")
         port = self._config.get("csgo.port")
 
         cmd = os.path.join(self._root_dir, "srcds_run")
@@ -484,6 +485,9 @@ class Installer(object):
             args.append(arg)
         if max_players:
             arg = "%s %s" % (Parameters.MAX_PLAYERS, max_players)
+            args.append(arg)
+        if ip_addr:
+            arg = "%s %s" % (Parameters.IP_ADDR, ip_addr)
             args.append(arg)
         if port:
             arg = "%s %s" % (Parameters.PORT, port)
