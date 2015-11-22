@@ -5,6 +5,12 @@ To install custom sourcemod plugins an additional data folder is required. (see 
 
 This software will be designed for deploying multiple CS:GO Servers with SaltStack.
 
+## installation
+
+    pip install vdf
+    make
+    make install
+
 ## usage
 
 The following command will assemble/install all cs:go servers configured in "/etc/adapo/servers.d/".
