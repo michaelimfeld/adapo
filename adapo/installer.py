@@ -339,7 +339,7 @@ class Installer(object):
         """
             download map from fastdl server
         """
-        fastdl_url = self._config.get("csgo.fastdl_url")
+        fastdl_url = self._config.get("server_config.sv_downloadurl")
         url = fastdl_url + "maps/" + map_name + ".bsp.bz2"
         maps_dir = os.path.join(
             self._config.get("csgo.root_directory"),
@@ -537,6 +537,12 @@ class Installer(object):
         """
             write database config databases.cfg
         """
+        configured_dbs = self._config.get("sourcemod.databases")
+
+        if not configured_dbs:
+            self._logger.info("no databases configured")
+            return True
+
         database_config_path = os.path.join(
             self._root_dir,
             "csgo/addons/sourcemod/configs/databases.cfg"
@@ -549,7 +555,6 @@ class Installer(object):
         db_config = vdf.load(db_config_file, mapper=OrderedDict)
         db_config_file.close()
 
-        configured_dbs = self._config.get("sourcemod.databases")
         for database_name, database_config in configured_dbs.iteritems():
             db_config["Databases"][database_name] = database_config
 

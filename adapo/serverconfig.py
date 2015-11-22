@@ -50,3 +50,4 @@ class ServerConfig(object):
             self._logger.error(
                 "could not find key '%s' in '%s'" % (key, self._path)
             )
+            return False
