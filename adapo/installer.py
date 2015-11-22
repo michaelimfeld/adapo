@@ -3,8 +3,10 @@
 """
 
 import os
+import vdf
 import stat
 import shutil
+from collections import OrderedDict
 from adapo.logger import Logger
 from adapo.serverconfig import ServerConfig
 from adapo.parameters import Parameters
@@ -244,6 +246,11 @@ class Installer(object):
             self._logger.error("could not write admins_simple.ini")
             return False
         self._logger.info("admins_simple.ini successfully written")
+
+        if not self.write_databases_config():
+            self._logger.error("could not write databases.cfg")
+            return False
+        self._logger.info("databases.cfg successfully written")
 
         return True
 
@@ -510,7 +517,7 @@ class Installer(object):
             write config admins_simple.ini
         """
         admins_config_file = os.path.join(
-            self._config.get("csgo.root_directory"),
+            self._root_dir,
             "csgo/addons/sourcemod/configs/admins_simple.ini"
         )
 
@@ -523,5 +530,33 @@ class Installer(object):
                 config_file.write(
                     '"%s" "%s"\n' % (user["steam_id"], user["flags"])
                 )
+
+        return True
+
+    def write_databases_config(self):
+        """
+            write database config databases.cfg
+        """
+        database_config_path = os.path.join(
+            self._root_dir,
+            "csgo/addons/sourcemod/configs/databases.cfg"
+        )
+
+        db_config_file = open(database_config_path, "r")
+        self._logger.info(
+            "loading databases configuration '%s' ..." % database_config_path
+        )
+        db_config = vdf.load(db_config_file, mapper=OrderedDict)
+        db_config_file.close()
+
+        configured_dbs = self._config.get("sourcemod.databases")
+        for database_name, database_config in configured_dbs.iteritems():
+            db_config["Databases"][database_name] = database_config
+
+        self._logger.info(
+            "writing databases config '%s' ..." % database_config_path
+        )
+        with open(database_config_path, "w") as config_file:
+            config_file.write(vdf.dumps(db_config, pretty=True))
 
         return True
