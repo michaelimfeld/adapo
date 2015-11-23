@@ -7,6 +7,6 @@ Standards-Version: 3.9.1
 
 Package: adapo
 Architecture: any
-Depends: ${misc:Depends}, ${python:Depends}, lib32gcc1 (>= 4.7.2-5)
+Depends: ${misc:Depends}, ${python:Depends}, lib32gcc1 (>= 4.7.2-5), lib32stdc++6 (>= 4.7.2), python-pip (>= 1.5.6-5)
 Description: Counter-Strike: Global Offensive Server Assembler/Installer
 
