@@ -56,6 +56,13 @@ class ResourceManager(object):
         """
         self._logger.info("downloading '%s' ..." % url)
         os.chdir(dst)
+
+        # remove file with same name, if exists
+        filename = url.split("/")[-1]
+        if os.path.exists(os.path.join(dst, filename)):
+            self._logger.info("removing existing file '%s' ..." % filename)
+            os.remove(os.path.join(dst, filename))
+
         ret = subprocess.call(
             [
                 "wget",
