@@ -8,8 +8,8 @@ This software will be designed for deploying multiple CS:GO Servers with SaltSta
 ## installation
 
     pip install vdf
-    make
-    make install
+    debuild -us -uc
+    dpkg -i ../adapo_1.0_amd64.deb
 
 ## usage
 
@@ -37,4 +37,5 @@ Example directory structure:
     data/plugins/complexplugin/csgo/addons/configs/complex.cfg
     data/plugins/complexplugin/csgo/cfg/sourcemod/complexplugin/plugin.cfg
 
+You can find an example data directory in /usr/share/adapo/.
 The data directory can be set in the global adapo configuration (/etc/adapo/main.cfg)
