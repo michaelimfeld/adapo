@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# remove .pyc files
+rm -f /usr/lib/python2.7/dist-packages/adapo/*.pyc

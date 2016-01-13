@@ -1,1 +1,6 @@
+#!/bin/sh
+
+chmod +x /usr/bin/adapo
+
+echo "installing pip dependencies"
 pip install vdf

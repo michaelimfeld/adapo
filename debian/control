@@ -2,11 +2,11 @@ Source: adapo
 Maintainer: Michael Imfeld <michaelimfeld@crooked.ch>
 Section: python
 Priority: optional
-Build-Depends: python-setuptools (>= 0.6.24-1), python-all (>= 2.6.6-3), debhelper (>= 7.4.3)
-Standards-Version: 3.9.1
+Build-Depends: debhelper (>= 7.4.3)
+Standards-Version: 3.9.5
+Homepage: https://github.com/michaelimfeld/adapo.git
 
 Package: adapo
 Architecture: any
-Depends: ${misc:Depends}, ${python:Depends}, lib32gcc1 (>= 4.7.2-5), lib32stdc++6 (>= 4.7.2), python-pip (>= 1.5.6-5)
+Depends: ${shlibs:Depends}, ${misc:Depends}, lib32gcc1 (>= 4.7.2-5), python-pip (>= 1.5.6-5)
 Description: Counter-Strike: Global Offensive Server Assembler/Installer
-
