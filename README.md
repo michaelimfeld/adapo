@@ -1,27 +1,31 @@
-# csgo server assembler/installer
+# CS:GO Server Assembler/Installer
 
 This python application has the goal to setup/install Counter-Strike: Global Offensive Servers inlcuding metamod, sourcemod and its plugins by only reading a text based configuration file.
 To install custom sourcemod plugins an additional data folder is required. (see sourcemod data)
 
 This software will be designed for deploying multiple CS:GO Servers with SaltStack.
 
-## installation
+## Installation
 
-    pip install vdf
     debuild -us -uc
     dpkg -i ../adapo_1.0_amd64.deb
 
-## usage
+## Usage
 
 The following command will assemble/install all cs:go servers configured in "/etc/adapo/servers.d/".
 
     adapo install
 
-## sourcemod data
-### plugins
+## Configuration
+
+An example configuration file can be found in /usr/share/adapo/.
+
+
+## Sourcemod Data
+### Plugins
 There are two types of plugins:
- - simple
- - complex
+  - simple
+  - complex
 
 For a simple plugin only the compiled .smx plugin binary is needed. simple.
 

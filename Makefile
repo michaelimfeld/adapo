@@ -10,3 +10,7 @@ install:
 	# copy example data directory
 	mkdir -p $(DESTDIR)/usr/share/adapo
 	cp -r data $(DESTDIR)/usr/share/adapo
+	# copy config files
+	mkdir -p $(DESTDIR)/etc/adapo/servers.d
+	cp debian_files/config/main.cfg  $(DESTDIR)/etc/adapo
+	cp debian_files/config/example.cfg  $(DESTDIR)/usr/share/adapo
