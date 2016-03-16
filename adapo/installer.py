@@ -524,6 +524,9 @@ class Installer(object):
         self._logger.info("generating '%s' ..." % admins_config_file)
 
         users = self._config.get("sourcemod.users")
+        if not users:
+            self._logger.info("No users found to write to admis_simple.ini")
+            return True
 
         with open(admins_config_file, "w") as config_file:
             for user in users:

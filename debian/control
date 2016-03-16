@@ -8,5 +8,5 @@ Homepage: https://github.com/michaelimfeld/adapo.git
 
 Package: adapo
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, lib32gcc1 (>= 4.7.2-5), python-pip (>= 1.5.6-5)
+Depends: ${shlibs:Depends}, ${misc:Depends}, lib32gcc1 (>= 4.7.2-5), python-pip (>= 1.5.6-5), python-yaml
 Description: Counter-Strike: Global Offensive Server Assembler/Installer
