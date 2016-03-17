@@ -22,6 +22,9 @@ class ResourceManager(object):
             open sub process
             pipe stdout and stderr to log file
         """
+        self._logger.info(
+            "EXECUTING {0} in {1}".format(" ".join(args), cwd)
+        )
         proc = subprocess.Popen(
             ["stdbuf", "-oL"] + args,
             cwd=cwd,
@@ -55,13 +58,9 @@ class ResourceManager(object):
             destination directory
         """
         self._logger.info("downloading '%s' ..." % url)
-        os.chdir(dst)
 
-        # remove file with same name, if exists
+        os.chdir(dst)
         filename = url.split("/")[-1]
-        if os.path.exists(os.path.join(dst, filename)):
-            self._logger.info("removing existing file '%s' ..." % filename)
-            os.remove(os.path.join(dst, filename))
 
         ret = subprocess.call(
             [
@@ -71,11 +70,11 @@ class ResourceManager(object):
         )
 
         if ret != 0:
-            return False
+            return ""
 
-        return True
+        return os.path.join(dst, filename)
 
-    def unpack(self, path, cwd):
+    def unpack(self, path, dst):
         """
             unpack tar.gz file
         """
@@ -85,9 +84,11 @@ class ResourceManager(object):
             [
                 "tar",
                 "-xvzf",
-                path
+                path,
+                "-C",
+                dst
             ],
-            cwd
+            "/"
         )
 
     def copy_tree(self, src, dst):

@@ -148,15 +148,6 @@ class Installer(object):
             self._steamcmd_path
         )
 
-    def unpack_steamcmd(self):
-        """
-            unpack steamcmd.tar.gz
-        """
-        self._logger.info("unpacking steamcmd ...")
-
-        steamcmd_tar = self._steamcmd_url.split("/")[-1]
-        return self._resourcemanager.unpack(steamcmd_tar, self._steamcmd_path)
-
     def clean_steamcmd(self):
         """
             clean steamcmd directory
@@ -177,10 +168,10 @@ class Installer(object):
         """
         self._logger.info("installing steamcmd ...")
 
-        steamcmd_tar = self._steamcmd_url.split("/")[-1]
         if not os.path.exists(self._steamcmd_path):
             os.makedirs(self._steamcmd_path)
 
+        steamcmd_tar = self._steamcmd_url.split("/")[-1]
         steamcmd_tar = os.path.join(
             self._steamcmd_path,
             steamcmd_tar
@@ -195,7 +186,7 @@ class Installer(object):
             return False
         self._logger.info("steamcmd successfully downloaded")
 
-        if not self.unpack_steamcmd():
+        if not self._resourcemanager.unpack(steamcmd_tar, self._steamcmd_path):
             self._logger.error("could not unpack steamcmd!")
             return False
         self._logger.info("steamcmd successfully unpacked")
@@ -211,34 +202,35 @@ class Installer(object):
         """
             download sourcemod
         """
+        sourcemod_tar = self._sourcemod_url.split("/")[-1]
+        sourcemod_tar_path = os.path.join(self._root_dir, "csgo", sourcemod_tar)
+
+        if os.path.exists(sourcemod_tar_path):
+            self._logger.info(
+                "sourcemod already cached, if you want to redownload it"
+                " remove the sourcemod tar file: '{0}' ..."
+                .format(sourcemod_tar_path)
+            )
+            return sourcemod_tar_path
+
         self._logger.info("downloading sourcemod ...")
         return self._resourcemanager.download(
             self._sourcemod_url,
             os.path.join(self._root_dir, "csgo")
         )
 
-    def unpack_sourcemod(self):
-        """
-            unpack sourcemod
-        """
-        self._logger.info("unpacking sourcemod ...")
-        sourcemod_tar = self._sourcemod_url.split("/")[-1]
-        dst = os.path.join(self._root_dir, "csgo")
-        ret = self._resourcemanager.unpack(sourcemod_tar, dst)
-        os.remove(os.path.join(dst, sourcemod_tar))
-
-        return ret
-
     def install_sourcemod(self):
         """
             install sourcemod to csgo root dir
         """
         self._logger.info("installing sourcemod ...")
-        if not self.download_sourcemod():
+        sourcemod_tar = self.download_sourcemod()
+        if not sourcemod_tar:
             self._logger.error("could not download sourcemod!")
             return False
 
-        if not self.unpack_sourcemod():
+        dst = "/".join(sourcemod_tar.split("/")[:-1])
+        if not self._resourcemanager.unpack(sourcemod_tar, dst):
             self._logger.error("could not unpack sourcemod!")
             return False
 
@@ -258,34 +250,35 @@ class Installer(object):
         """
             download metamod
         """
+        metamod_tar = self._metamod_url.split("/")[-1]
+        metamod_tar_path = os.path.join(self._root_dir, "csgo", metamod_tar)
+
+        if os.path.exists(metamod_tar_path):
+            self._logger.info(
+                "metamod already cached, if you want to redownload it"
+                " remove the metamod tar file: '{0}' ..."
+                .format(metamod_tar_path)
+            )
+            return metamod_tar_path
+
         self._logger.info("downloading metamod ...")
         return self._resourcemanager.download(
             self._metamod_url,
             os.path.join(self._root_dir, "csgo")
         )
 
-    def unpack_metamod(self):
-        """
-            unpack metamod
-        """
-        self._logger.info("unpacking metamod ...")
-        metamod_tar = self._metamod_url.split("/")[-1]
-        dst = os.path.join(self._root_dir, "csgo")
-        ret = self._resourcemanager.unpack(metamod_tar, dst)
-        os.remove(os.path.join(dst, metamod_tar))
-
-        return ret
-
     def install_metamod(self):
         """
             install metamod to csgo root dir
         """
         self._logger.info("installing metamod ...")
-        if not self.download_metamod():
+        metamod_tar = self.download_metamod()
+        if not metamod_tar:
             self._logger.error("could not download metamod!")
             return False
 
-        if not self.unpack_metamod():
+        dst = "/".join(metamod_tar.split("/")[:-1])
+        if not self._resourcemanager.unpack(metamod_tar, dst):
             self._logger.error("could not unpack metamod!")
             return False
 
