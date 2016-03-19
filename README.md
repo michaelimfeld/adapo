@@ -1,4 +1,7 @@
 # CS:GO Server Assembler/Installer
+[![Build Status](https://api.travis-ci.org/michaelimfeld/adapo.svg?branch=master)](https://travis-ci.org/michaelimfeld/adapo)
+[![GitHub version](https://badge.fury.io/gh/michaelimfeld%2Fadapo.svg)](https://badge.fury.io/gh/michaelimfeld%2Fadapo)
+
 
 This python application has the goal to setup/install Counter-Strike: Global Offensive Servers inlcuding metamod, sourcemod and its plugins by only reading a text based configuration file.
 To install custom sourcemod plugins an additional data folder is required. (see sourcemod data)
