@@ -1,43 +1,35 @@
 """
-    Adapo Logger
+    Provides the adapo logger class
 """
 
 import sys
 
-class Logger(object):
+
+class Logger(object):  # pylint: disable=too-few-public-methods
     """
-        tiny logger
+        Adapo logger class
     """
 
     SUCCESS = '\033[92m'
     ERROR = '\033[91m'
     WARN = '\033[93m'
     ENDC = '\033[0m'
+    INFO = ENDC
 
-    def info(self, message):
-        """
-            print info message
-        """
-        print "info: %s" % message
-        sys.stdout.flush()
+    def __getattr__(self, attr):
 
-    def warn(self, message):
-        """
-            print warn message
-        """
-        print "%swarn: %s" % (self.WARN, message + self.ENDC)
-        sys.stdout.flush()
+        def log_func(message):
+            """Prints out log message.
 
-    def error(self, message):
-        """
-            print error message
-        """
-        print "%serror: %s" % (self.ERROR, message + self.ENDC)
-        sys.stdout.flush()
+            Args:
+                message: Message to be printed out.
+            """
+            color = getattr(self, attr.upper())
+            log_message = "{0}{1}: {2}{3}".format(
+                color, attr, message, self.ENDC
+            )
 
-    def success(self, message):
-        """
-            print success message
-        """
-        print "%ssuccess: %s" % (self.SUCCESS, message + self.ENDC)
-        sys.stdout.flush()
+            print log_message
+            sys.stdout.flush()
+
+        return log_func
