@@ -6,7 +6,7 @@ import re
 import os
 import urllib2
 from adapo.logger import Logger
-from adapo.serverconfig import ServerConfig
+from adapo.config import Config
 
 
 class ConfigValidator(object):
@@ -17,19 +17,19 @@ class ConfigValidator(object):
     ADAPO_CONF = "/etc/adapo/main.cfg"
 
     def __init__(self, config_path):
-        self._logger = Logger()
+        self._log = Logger()
 
         # load global adapo configuration
-        self._adapo_config = ServerConfig(self.ADAPO_CONF)
+        self._adapo_config = Config(self.ADAPO_CONF)
         self._data_path = self._adapo_config.get("data_src_path")
 
-        self._config = ServerConfig(config_path)
+        self._config = Config(config_path)
         self._root_dir = self._config.get("csgo.root_directory")
         self._fastdl_url = self._config.get("server_config.sv_downloadurl")
         self._maps = self._config.get("csgo.maps")
         self._plugins = self._config.get("sourcemod.plugins")
 
-        self._logger.info("csgo config file validation initialized")
+        self._log.info("csgo config file validation initialized")
 
     def validate(self):
         """
@@ -47,20 +47,20 @@ class ConfigValidator(object):
             check if all listed plugins are
             available in data/plugins directory
         """
-        self._logger.info("validating plugins ...")
+        self._log.info("validating plugins ...")
 
         for plugin in self._plugins:
             path = os.path.join(self._data_path, "plugins", plugin)
 
             if os.path.exists("%s.smx" % path):
-                self._logger.info("found simple plugin '%s.smx'" % path)
+                self._log.info("found simple plugin '%s.smx'" % path)
                 continue
 
             if os.path.isdir(path):
-                self._logger.info("found complex plugin '%s'" % path)
+                self._log.info("found complex plugin '%s'" % path)
                 continue
 
-            self._logger.error("could not find plugin '%s(.smx)'!" % path)
+            self._log.error("could not find plugin '%s(.smx)'!" % path)
             return False
 
         return True
@@ -70,7 +70,7 @@ class ConfigValidator(object):
             check if all listed maps are
             available on the fastdl server
         """
-        self._logger.info("validating maps ...")
+        self._log.info("validating maps ...")
 
         maps_url = "%s/maps/" % self._fastdl_url
         pattern = r'href=[\'"]?([^\'" >]+)'
@@ -79,7 +79,7 @@ class ConfigValidator(object):
         try:
             response = urllib2.urlopen(maps_url).read()
         except urllib2.URLError:
-            self._logger.error(
+            self._log.error(
                 "fastdl server '%s' unreachable" % self._fastdl_url
             )
             return False
@@ -93,8 +93,8 @@ class ConfigValidator(object):
 
         for _map in self._maps:
             if _map not in maps_present:
-                self._logger.error(
+                self._log.error(
                     "map '%s' not available on fastdl server" % _map
                 )
                 return False
-            self._logger.info("map '%s' found on fastdl server" % _map)
+            self._log.info("map '%s' found on fastdl server" % _map)

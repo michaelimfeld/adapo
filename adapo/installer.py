@@ -8,7 +8,7 @@ import stat
 import shutil
 from collections import OrderedDict
 from adapo.logger import Logger
-from adapo.serverconfig import ServerConfig
+from adapo.config import Config
 from adapo.parameters import Parameters
 from adapo.resourcemanager import ResourceManager
 
@@ -22,19 +22,48 @@ class Installer(object):
     ADAPO_CONF = "/etc/adapo/main.cfg"
 
     def __init__(self, config_path):
-        self._logger = Logger()
+        self._log = Logger()
 
         # load global adapo configuration
-        self._adapo_config = ServerConfig(self.ADAPO_CONF)
-        self._steamcmd_path = self._adapo_config.get("steamcmd_path")
-        self._steamcmd_url = self._adapo_config.get("steamcmd_dl_url")
-        self._metamod_url = self._adapo_config.get("metamod_dl_url")
-        self._sourcemod_url = self._adapo_config.get("sourcemod_dl_url")
-        self._data_path = self._adapo_config.get("data_src_path")
+        self._global_config = Config(self.ADAPO_CONF)
+
+        self._steamcmd_url = self._global_config.steamcmd_dl_url
+        self._steamcmd_path = self._global_config.steamcmd_path
+
+        if not self._steamcmd_url or not self._steamcmd_path:
+            self._log.error(
+                "steamcmd config attrs are required to"
+                " install a csgo server"
+            )
+            exit(1)
+
+        if not os.path.exists(self._steamcmd_path):
+            os.makedirs(self._steamcmd_path)
+
+        self._metamod_url = self._global_config.metamod_dl_url
+        self._sourcemod_url = self._global_config.sourcemod_dl_url
+        if not self._steamcmd_url or not self._steamcmd_path:
+            self._log.error(
+                "source & metamode urls are required to install a csgo server"
+            )
+            exit(1)
 
         # load specific cs:go server configuration
-        self._config = ServerConfig(config_path)
-        self._root_dir = self._config.get("csgo.root_directory")
+        self._config = Config(config_path)
+        if not self._config.csgo:
+            self._log.error(
+                "configuration section 'csgo' not found!"
+            )
+            exit(1)
+
+        self._root_dir = self._config.csgo.get("root_directory")
+        if not self._root_dir:
+            self._log.error(
+                "root directory not set"
+            )
+            exit(1)
+
+
 
         self._resourcemanager = ResourceManager()
 
@@ -43,67 +72,67 @@ class Installer(object):
             install csgo server
         """
         if not self.install_steamcmd():
-            self._logger.error(
+            self._log.error(
                 "steamcmd installation failed, "
                 "check '%s' for errors!" % self.LOG_FILE
             )
             return False
-        self._logger.info("steamcmd successfully installed")
+        self._log.info("steamcmd successfully installed")
 
         if not self.install_csgo():
-            self._logger.error(
+            self._log.error(
                 "csgo installation failed, "
                 "check '%s' for errors!" % self.LOG_FILE
             )
             return False
-        self._logger.info("csgo successfully installed")
+        self._log.info("csgo successfully installed")
 
         if not self.install_metamod():
-            self._logger.error(
+            self._log.error(
                 "metamod installation failed, "
                 "check '%s' for errors!" % self.LOG_FILE
             )
             return False
-        self._logger.info("metamod successfully installed")
+        self._log.info("metamod successfully installed")
 
         if not self.install_sourcemod():
-            self._logger.error(
+            self._log.error(
                 "sourcemod installation failed, "
                 "check '%s' for errors!" % self.LOG_FILE
             )
             return False
-        self._logger.info("sourcmod successfully installed")
+        self._log.info("sourcmod successfully installed")
 
         if not self.install_plugins():
-            self._logger.error(
+            self._log.error(
                 "plugin installation failed, "
                 "check '%s' for errors!" % self.LOG_FILE
             )
             return False
-        self._logger.info("plugins successfully installed")
+        self._log.info("plugins successfully installed")
 
         if not self.install_maps():
-            self._logger.error(
+            self._log.error(
                 "map installation failed, "
                 "check '%s' for errors!" % self.LOG_FILE
             )
             return False
-        self._logger.info("maps successfully installed")
+        self._log.info("maps successfully installed")
 
         if not self.write_server_config():
-            self._logger.error(
+            self._log.error(
                 "could not install config!, "
                 "check '%s' for errors!" % self.LOG_FILE
             )
             return False
-        self._logger.info("server config successfully installed")
+        self._log.info("server config successfully installed")
 
         if not self.create_start_script():
-            self._logger.error(
+            self._log.error(
                 "could not create start script!, "
                 "check '%s' for errors!" % self.LOG_FILE
             )
-        self._logger.info("start script successfully written")
+            self._log.info("start script successfully written")
 
         return True
 
@@ -112,17 +141,16 @@ class Installer(object):
             uninstall csgo server
         """
         # FIXME: Implement uninstall
-        self._logger.info("uninstall not implemented yet")
+        self._log.info("uninstall not implemented yet")
 
     def install_csgo(self):
         """
             install csgo server
         """
-        self._logger.info("installing csgo with steamcmd ...")
-        root_dir = self._config.get("csgo.root_directory")
+        self._log.info("installing csgo with steamcmd ...")
 
-        if not os.path.exists(root_dir):
-            os.makedirs(root_dir)
+        if not os.path.exists(self._root_dir):
+            os.makedirs(self._root_dir)
 
         return self._resourcemanager.open_subprocess(
             [
@@ -130,7 +158,7 @@ class Installer(object):
                 "+login",
                 "anonymous",
                 "+force_install_dir",
-                root_dir,
+                self._root_dir,
                 "+app_update",
                 "740",
                 "+quit"
@@ -142,7 +170,8 @@ class Installer(object):
         """
             download steamcmd.tar.gz
         """
-        self._logger.info("downloading steamcmd ...")
+        self._log.info("downloading steamcmd ...")
+
         return self._resourcemanager.download(
             self._steamcmd_url,
             self._steamcmd_path
@@ -152,7 +181,7 @@ class Installer(object):
         """
             clean steamcmd directory
         """
-        self._logger.info("cleaning up steamcmd directory ...")
+        self._log.info("cleaning up steamcmd directory ...")
 
         steamcmd_tar = self._steamcmd_url.split("/")[-1]
         path = os.path.join(self._steamcmd_path, steamcmd_tar)
@@ -166,7 +195,7 @@ class Installer(object):
         """
             installs steamcmd
         """
-        self._logger.info("installing steamcmd ...")
+        self._log.info("installing steamcmd ...")
 
         if not os.path.exists(self._steamcmd_path):
             os.makedirs(self._steamcmd_path)
@@ -178,23 +207,23 @@ class Installer(object):
         )
 
         if os.path.exists(steamcmd_tar):
-            self._logger.error("steamcmd_linux.tar.gz already exists!")
+            self._log.error("steamcmd_linux.tar.gz already exists!")
             return False
 
         if not self.download_steamcmd():
-            self._logger.error("could not download steamcmd!")
+            self._log.error("could not download steamcmd!")
             return False
-        self._logger.info("steamcmd successfully downloaded")
+        self._log.info("steamcmd successfully downloaded")
 
         if not self._resourcemanager.unpack(steamcmd_tar, self._steamcmd_path):
-            self._logger.error("could not unpack steamcmd!")
+            self._log.error("could not unpack steamcmd!")
             return False
-        self._logger.info("steamcmd successfully unpacked")
+        self._log.info("steamcmd successfully unpacked")
 
         if not self.clean_steamcmd():
-            self._logger.error("could not clean steamcmd!")
+            self._log.error("could not clean steamcmd!")
             return False
-        self._logger.info("steamcmd successfully cleaned")
+        self._log.info("steamcmd successfully cleaned")
 
         return True
 
@@ -206,14 +235,14 @@ class Installer(object):
         sourcemod_tar_path = os.path.join(self._root_dir, "csgo", sourcemod_tar)
 
         if os.path.exists(sourcemod_tar_path):
-            self._logger.info(
+            self._log.info(
                 "sourcemod already cached, if you want to redownload it"
                 " remove the sourcemod tar file: '{0}' ..."
                 .format(sourcemod_tar_path)
             )
             return sourcemod_tar_path
 
-        self._logger.info("downloading sourcemod ...")
+        self._log.info("downloading sourcemod ...")
         return self._resourcemanager.download(
             self._sourcemod_url,
             os.path.join(self._root_dir, "csgo")
@@ -223,26 +252,26 @@ class Installer(object):
         """
             install sourcemod to csgo root dir
         """
-        self._logger.info("installing sourcemod ...")
+        self._log.info("installing sourcemod ...")
         sourcemod_tar = self.download_sourcemod()
         if not sourcemod_tar:
-            self._logger.error("could not download sourcemod!")
+            self._log.error("could not download sourcemod!")
             return False
 
         dst = "/".join(sourcemod_tar.split("/")[:-1])
         if not self._resourcemanager.unpack(sourcemod_tar, dst):
-            self._logger.error("could not unpack sourcemod!")
+            self._log.error("could not unpack sourcemod!")
             return False
 
         if not self.write_admins_config():
-            self._logger.error("could not write admins_simple.ini")
+            self._log.error("could not write admins_simple.ini")
             return False
-        self._logger.info("admins_simple.ini successfully written")
+        self._log.info("admins_simple.ini successfully written")
 
         if not self.write_databases_config():
-            self._logger.error("could not write databases.cfg")
+            self._log.error("could not write databases.cfg")
             return False
-        self._logger.info("databases.cfg successfully written")
+        self._log.info("databases.cfg successfully written")
 
         return True
 
@@ -254,14 +283,14 @@ class Installer(object):
         metamod_tar_path = os.path.join(self._root_dir, "csgo", metamod_tar)
 
         if os.path.exists(metamod_tar_path):
-            self._logger.info(
+            self._log.info(
                 "metamod already cached, if you want to redownload it"
                 " remove the metamod tar file: '{0}' ..."
                 .format(metamod_tar_path)
             )
             return metamod_tar_path
 
-        self._logger.info("downloading metamod ...")
+        self._log.info("downloading metamod ...")
         return self._resourcemanager.download(
             self._metamod_url,
             os.path.join(self._root_dir, "csgo")
@@ -271,15 +300,15 @@ class Installer(object):
         """
             install metamod to csgo root dir
         """
-        self._logger.info("installing metamod ...")
+        self._log.info("installing metamod ...")
         metamod_tar = self.download_metamod()
         if not metamod_tar:
-            self._logger.error("could not download metamod!")
+            self._log.error("could not download metamod!")
             return False
 
         dst = "/".join(metamod_tar.split("/")[:-1])
         if not self._resourcemanager.unpack(metamod_tar, dst):
-            self._logger.error("could not unpack metamod!")
+            self._log.error("could not unpack metamod!")
             return False
 
         metamod_vdf = os.path.join(self._root_dir, "csgo/addons/metamod.vdf")
@@ -295,29 +324,35 @@ class Installer(object):
         """
             install sourcemod plugins
         """
-        self._logger.info("installing plugins ...")
+        self._log.info("installing plugins ...")
 
-        plugins = self._config.get("sourcemod.plugins")
+        sourcemod_cfg = self._config.sourcemod
+        plugins = sourcemod_cfg.get("plugins")
 
         for plugin in plugins:
-            self._logger.info("installing plugin '%s' ..." % plugin)
-            plugin_path = os.path.join(self._data_path, "plugins", plugin)
+            self._log.info("installing plugin '%s' ..." % plugin)
+
+            data_path = self._global_config.data_src_path
+            if not data_path:
+                return False
+
+            plugin_path = os.path.join(data_path, "plugins", plugin)
 
             if os.path.exists(plugin_path + ".smx"):
                 plugin_path = plugin_path + ".smx"
 
             if not os.path.exists(plugin_path):
-                self._logger.error(
+                self._log.error(
                     "could not find plugin files for '%s'" % plugin_path
                 )
                 continue
 
             src = plugin_path
-            dst = self._config.get("csgo.root_directory")
+            dst = self._root_dir
 
             if plugin_path.endswith(".smx"):
                 dst = os.path.join(
-                    self._config.get("csgo.root_directory"),
+                    self._root_dir,
                     "csgo/addons/sourcemod/plugins/"
                 )
                 shutil.copy2(src, dst)
@@ -325,17 +360,21 @@ class Installer(object):
 
             self._resourcemanager.copy_tree(src, dst)
 
-        self._logger.info("simple plugins successfully installed")
+        self._log.info("simple plugins successfully installed")
         return True
 
     def dowload_map(self, map_name):
         """
             download map from fastdl server
         """
-        fastdl_url = self._config.get("server_config.sv_downloadurl")
+        server_cfg = self._config.server_config
+        if not server_cfg:
+            return False
+
+        fastdl_url = server_cfg.get("sv_downloadurl")
         url = fastdl_url + "maps/" + map_name + ".bsp.bz2"
         maps_dir = os.path.join(
-            self._config.get("csgo.root_directory"),
+            self._root_dir,
             "csgo/maps"
         )
         return self._resourcemanager.download(url, maps_dir)
@@ -346,7 +385,7 @@ class Installer(object):
             in csgo/maps
         """
         maps_dir = os.path.join(
-            self._config.get("csgo.root_directory"),
+            self._root_dir,
             "csgo/maps"
         )
 
@@ -354,7 +393,7 @@ class Installer(object):
             if not map_file.endswith(".bsp.bz2"):
                 continue
 
-            self._logger.info("unpacking map '%s' ..." % map_file)
+            self._log.info("unpacking map '%s' ..." % map_file)
 
             ret = self._resourcemanager.open_subprocess(
                 [
@@ -376,20 +415,22 @@ class Installer(object):
             already in maps dir
         """
         maps_dir = os.path.join(
-            self._config.get("csgo.root_directory"),
+            self._root_dir,
             "csgo/maps"
         )
 
         maps_installed = os.listdir(maps_dir)
 
-        for _map in self._config.get("csgo.maps"):
+        csgo_cfg = self._config.csgo
+
+        for _map in csgo_cfg.get("maps"):
             map_name = _map + ".bsp"
 
             if map_name in maps_installed:
-                self._logger.info("map '%s' already installed" % map_name)
+                self._log.info("map '%s' already installed" % map_name)
                 continue
 
-            self._logger.info("installing map '%s' ..." % map_name)
+            self._log.info("installing map '%s' ..." % map_name)
             ret = self.dowload_map(_map)
 
             if not ret:
@@ -398,20 +439,20 @@ class Installer(object):
         if not self.unpack_maps():
             return False
 
-        self._logger.info("writing maps to maplist.txt & mapcycle.txt ...")
+        self._log.info("writing maps to maplist.txt & mapcycle.txt ...")
 
         maplist_file = os.path.join(
-            self._config.get("csgo.root_directory"),
+            self._root_dir,
             "csgo/maplist.txt"
         )
 
         mapcycle_file = os.path.join(
-            self._config.get("csgo.root_directory"),
+            self._root_dir,
             "csgo/mapcycle.txt"
         )
 
         with open(maplist_file, "w") as maplist:
-            for _map in self._config.get("csgo.maps"):
+            for _map in csgo_cfg.get("maps"):
                 maplist.write(_map)
                 maplist.write("\n")
 
@@ -424,7 +465,7 @@ class Installer(object):
             install/write specific config files
         """
         if not self.write_server_config():
-            self._logger.error("could not write server config")
+            self._log.error("could not write server config")
             return False
 
         return True
@@ -434,14 +475,14 @@ class Installer(object):
             write config server.cfg
         """
         server_cfg_file = os.path.join(
-            self._config.get("csgo.root_directory"),
+            self._root_dir,
             "csgo/cfg/server.cfg"
         )
 
-        self._logger.info("generating '%s' ..." % server_cfg_file)
+        self._log.info("generating '%s' ..." % server_cfg_file)
 
         with open(server_cfg_file, "w") as config_file:
-            server_vars = self._config.get("server_config")
+            server_vars = self._config.server_config
             for key, value in server_vars.iteritems():
                 config_file.write(
                     '%s "%s"\n' % (key, value)
@@ -456,13 +497,15 @@ class Installer(object):
             ./srcds_run -game csgo -console -usercon +game_type 0 +game_mode 0
             +map am_must2 -tickrate 128 -maxplayers_override 32 -condebug
         """
-        gametype = self._config.get("csgo.game_type")
-        gamemode = self._config.get("csgo.game_mode")
-        start_map = self._config.get("csgo.map")
-        tickrate = self._config.get("csgo.tickrate")
-        max_players = self._config.get("csgo.max_players")
-        ip_addr = self._config.get("csgo.ip")
-        port = self._config.get("csgo.port")
+        csgo_cfg = self._config.csgo
+
+        gametype = csgo_cfg.get("game_type")
+        gamemode = csgo_cfg.get("game_mode")
+        start_map = csgo_cfg.get("map")
+        tickrate = csgo_cfg.get("tickrate")
+        max_players = csgo_cfg.get("max_players")
+        ip_addr = csgo_cfg.get("ip")
+        port = csgo_cfg.get("port")
 
         cmd = os.path.join(self._root_dir, "srcds_run")
         args = [
@@ -514,11 +557,12 @@ class Installer(object):
             "csgo/addons/sourcemod/configs/admins_simple.ini"
         )
 
-        self._logger.info("generating '%s' ..." % admins_config_file)
+        self._log.info("generating '%s' ..." % admins_config_file)
 
-        users = self._config.get("sourcemod.users")
+        sourcemod_cfg = self._config.sourcemod
+        users = sourcemod_cfg.get("users")
         if not users:
-            self._logger.info("No users found to write to admis_simple.ini")
+            self._log.info("No users found to write to admis_simple.ini")
             return True
 
         with open(admins_config_file, "w") as config_file:
@@ -533,10 +577,11 @@ class Installer(object):
         """
             write database config databases.cfg
         """
-        configured_dbs = self._config.get("sourcemod.databases")
+        sourcemod_cfg = self._config.sourcemod
+        configured_dbs = sourcemod_cfg.get("databases")
 
         if not configured_dbs:
-            self._logger.info("no databases configured")
+            self._log.info("no databases configured")
             return True
 
         database_config_path = os.path.join(
@@ -545,7 +590,7 @@ class Installer(object):
         )
 
         db_config_file = open(database_config_path, "r")
-        self._logger.info(
+        self._log.info(
             "loading databases configuration '%s' ..." % database_config_path
         )
         db_config = vdf.load(db_config_file, mapper=OrderedDict)
@@ -554,7 +599,7 @@ class Installer(object):
         for database_name, database_config in configured_dbs.iteritems():
             db_config["Databases"][database_name] = database_config
 
-        self._logger.info(
+        self._log.info(
             "writing databases config '%s' ..." % database_config_path
         )
         with open(database_config_path, "w") as config_file:
